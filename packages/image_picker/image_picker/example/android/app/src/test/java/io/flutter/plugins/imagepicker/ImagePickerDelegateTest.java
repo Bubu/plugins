@@ -3,7 +3,9 @@ package io.flutter.plugins.imagepicker;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -11,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -34,7 +37,6 @@ public class ImagePickerDelegateTest {
   @Mock MethodCall mockMethodCall;
   @Mock MethodChannel.Result mockResult;
   @Mock ImagePickerDelegate.PermissionManager mockPermissionManager;
-  @Mock ImagePickerDelegate.IntentResolver mockIntentResolver;
   @Mock FileUtils mockFileUtils;
   @Mock Intent mockIntent;
   @Mock ImagePickerCache cache;
@@ -150,7 +152,6 @@ public class ImagePickerDelegateTest {
   @Test
   public void takeImageWithCamera_WhenCameraPermissionNotPresent_RequestsForPermission() {
     when(mockPermissionManager.needRequestCameraPermission()).thenReturn(false);
-    when(mockIntentResolver.resolveActivity(any(Intent.class))).thenReturn(true);
 
     ImagePickerDelegate delegate = createDelegate();
     delegate.takeImageWithCamera(mockMethodCall, mockResult);
@@ -164,7 +165,6 @@ public class ImagePickerDelegateTest {
   public void
       takeImageWithCamera_WhenHasCameraPermission_AndAnActivityCanHandleCameraIntent_LaunchesTakeWithCameraIntent() {
     when(mockPermissionManager.isPermissionGranted(Manifest.permission.CAMERA)).thenReturn(true);
-    when(mockIntentResolver.resolveActivity(any(Intent.class))).thenReturn(true);
 
     ImagePickerDelegate delegate = createDelegate();
     delegate.takeImageWithCamera(mockMethodCall, mockResult);
@@ -178,8 +178,9 @@ public class ImagePickerDelegateTest {
   public void
       takeImageWithCamera_WhenHasCameraPermission_AndNoActivityToHandleCameraIntent_FinishesWithNoCamerasAvailableError() {
     when(mockPermissionManager.isPermissionGranted(Manifest.permission.CAMERA)).thenReturn(true);
-    when(mockIntentResolver.resolveActivity(any(Intent.class))).thenReturn(false);
-
+    doThrow(ActivityNotFoundException.class)
+        .when(mockActivity)
+        .startActivityForResult(any(Intent.class), anyInt());
     ImagePickerDelegate delegate = createDelegate();
     delegate.takeImageWithCamera(mockMethodCall, mockResult);
 
@@ -248,7 +249,6 @@ public class ImagePickerDelegateTest {
   @Test
   public void
       onRequestTakeVideoPermissionsResult_WhenCameraPermissionGranted_LaunchesTakeVideoWithCameraIntent() {
-    when(mockIntentResolver.resolveActivity(any(Intent.class))).thenReturn(true);
 
     ImagePickerDelegate delegate = createDelegateWithPendingResultAndMethodCall();
     delegate.onRequestPermissionsResult(
@@ -264,7 +264,6 @@ public class ImagePickerDelegateTest {
   @Test
   public void
       onRequestTakeImagePermissionsResult_WhenCameraPermissionGranted_LaunchesTakeWithCameraIntent() {
-    when(mockIntentResolver.resolveActivity(any(Intent.class))).thenReturn(true);
 
     ImagePickerDelegate delegate = createDelegateWithPendingResultAndMethodCall();
     delegate.onRequestPermissionsResult(
@@ -396,7 +395,6 @@ public class ImagePickerDelegateTest {
         null,
         cache,
         mockPermissionManager,
-        mockIntentResolver,
         mockFileUriResolver,
         mockFileUtils);
   }
@@ -410,7 +408,6 @@ public class ImagePickerDelegateTest {
         mockMethodCall,
         cache,
         mockPermissionManager,
-        mockIntentResolver,
         mockFileUriResolver,
         mockFileUtils);
   }
