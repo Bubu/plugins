@@ -1,3 +1,7 @@
+## 0.7.0+1
+
+* Fix using Camera as image source on Android 11+
+
 ## 0.7.0
 
 * Migrate to nullsafety
