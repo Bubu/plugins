@@ -6,6 +6,7 @@ package io.flutter.plugins.imagepicker;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -299,13 +300,6 @@ public class ImagePickerDelegate
       useFrontCamera(intent);
     }
 
-    boolean canTakePhotos = intentResolver.resolveActivity(intent);
-
-    if (!canTakePhotos) {
-      finishWithError("no_available_camera", "No cameras available for taking pictures.");
-      return;
-    }
-
     File videoFile = createTemporaryWritableVideoFile();
     pendingCameraMediaUri = Uri.parse("file:" + videoFile.getAbsolutePath());
 
@@ -313,7 +307,12 @@ public class ImagePickerDelegate
     intent.putExtra(MediaStore.EXTRA_OUTPUT, videoUri);
     grantUriPermissions(intent, videoUri);
 
-    activity.startActivityForResult(intent, REQUEST_CODE_TAKE_VIDEO_WITH_CAMERA);
+    try {
+      activity.startActivityForResult(intent, REQUEST_CODE_TAKE_VIDEO_WITH_CAMERA);
+    } catch (ActivityNotFoundException e) {
+      finishWithError("no_available_camera", "No cameras available for taking pictures.");
+      return;
+    }
   }
 
   public void chooseImageFromGallery(MethodCall methodCall, MethodChannel.Result result) {
@@ -366,13 +365,6 @@ public class ImagePickerDelegate
       useFrontCamera(intent);
     }
 
-    boolean canTakePhotos = intentResolver.resolveActivity(intent);
-
-    if (!canTakePhotos) {
-      finishWithError("no_available_camera", "No cameras available for taking pictures.");
-      return;
-    }
-
     File imageFile = createTemporaryWritableImageFile();
     pendingCameraMediaUri = Uri.parse("file:" + imageFile.getAbsolutePath());
 
@@ -380,7 +372,12 @@ public class ImagePickerDelegate
     intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
     grantUriPermissions(intent, imageUri);
 
-    activity.startActivityForResult(intent, REQUEST_CODE_TAKE_IMAGE_WITH_CAMERA);
+    try {
+      activity.startActivityForResult(intent, REQUEST_CODE_TAKE_IMAGE_WITH_CAMERA);
+    } catch (ActivityNotFoundException e) {
+      finishWithError("no_available_camera", "No cameras available for taking pictures.");
+      return;
+    }
   }
 
   private File createTemporaryWritableImageFile() {
